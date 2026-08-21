@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Users,
   GraduationCap,
@@ -172,22 +173,22 @@ function AdminDashboard({ data }: { data: DashboardData }) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
+              <Link href="/students" className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
                 <GraduationCap className="h-6 w-6 text-primary" />
                 <span className="text-sm font-medium">Manage Students</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
+              </Link>
+              <Link href="/faculty" className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
                 <Users className="h-6 w-6 text-primary" />
                 <span className="text-sm font-medium">Manage Faculty</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
+              </Link>
+              <Link href="/reports" className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
                 <FileText className="h-6 w-6 text-primary" />
                 <span className="text-sm font-medium">View Reports</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
+              </Link>
+              <Link href="/reports/attendance" className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-accent">
                 <BarChart3 className="h-6 w-6 text-primary" />
                 <span className="text-sm font-medium">Analytics</span>
-              </button>
+              </Link>
             </div>
           </CardContent>
         </Card>
