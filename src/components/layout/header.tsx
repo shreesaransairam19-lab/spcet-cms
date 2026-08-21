@@ -148,10 +148,14 @@ function Header({ user, notificationCount = 0, onMenuToggle }: HeaderProps) {
             <DropdownMenuItem
               destructive
               className="flex items-center gap-2"
-              onClick={() => {
-                fetch("/api/auth/logout", { method: "POST" }).then(() => {
-                  window.location.href = "/login";
+              onClick={async () => {
+                try {
+                  await fetch("/api/auth/logout", { method: "POST" });
+                } catch {}
+                document.cookie.split(";").forEach((c) => {
+                  document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
                 });
+                window.location.href = "/login";
               }}
             >
               <LogOut className="h-4 w-4" />

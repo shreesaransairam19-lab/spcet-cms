@@ -3,7 +3,7 @@
   "appName": "SPCET CMS",
   "webDir": "capacitor-web",
   "server": {
-    "url": "https://spcet-5z2pdhlp9-tsr12.vercel.app",
+    "url": "https://spcet-3viihwbq8-tsr12.vercel.app",
     "cleartext": true,
     "allowNavigation": ["*.supabase.co", "*.vercel.app"]
   },
