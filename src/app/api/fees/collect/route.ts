@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
 
     const student_id = searchParams.get("student_id") || "";
     const search = searchParams.get("search") || "";
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
-    }
 
     if (search) {
       const { data: students, error: studentError } = await supabase

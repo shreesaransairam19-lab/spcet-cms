@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
     const { channel, recipient, subject, message, data } = body;
 
@@ -28,21 +30,18 @@ export async function POST(request: NextRequest) {
       results.push({ channel: "whatsapp", status: "queued" });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("notifications").insert({
-        title: subject || "Notification",
-        message,
-        type: "general",
-        target_role: "all",
-        target_user_id: null,
-        target_department_id: null,
-        target_batch_year: null,
-        is_read: false,
-        link: null,
-        created_by: user.id,
-      });
-    }
+    await supabase.from("notifications").insert({
+      title: subject || "Notification",
+      message,
+      type: "general",
+      target_role: "all",
+      target_user_id: null,
+      target_department_id: null,
+      target_batch_year: null,
+      is_read: false,
+      link: null,
+      created_by: user.id,
+    });
 
     return NextResponse.json({
       success: true,

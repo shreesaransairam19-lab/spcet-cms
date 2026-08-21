@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, readFile } from "fs/promises";
 import { join } from "path";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 
 const ENV_PATH = join(process.cwd(), ".env.local");
 
@@ -60,6 +61,8 @@ async function writeEnvFile(updates: Record<string, string>): Promise<void> {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
     const body = await request.json();
     const { smtp_user, smtp_pass, email_from_name } = body;
 
@@ -112,6 +115,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
   const env = await readEnvFile();
   return NextResponse.json({
     configured: !!(env.SMTP_USER && env.SMTP_PASS),

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth-helpers";
 
 interface AttendanceReportRow {
   student_id: string;
@@ -18,7 +18,9 @@ interface AttendanceReportRow {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
 
     const subject_id = searchParams.get("subject_id") || "";
@@ -29,11 +31,6 @@ export async function GET(request: NextRequest) {
     const date_to = searchParams.get("date_to") || "";
     const report_type = searchParams.get("report_type") || "student_wise";
     const low_attendance_threshold = parseInt(searchParams.get("threshold") || "75", 10);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
-    }
 
     let classQuery = supabase
       .from("attendance_classes")

@@ -1,29 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 import type { ApiListResponse, FeePayment } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const per_page = parseInt(searchParams.get("per_page") || "20", 10);
+    const per_page = Math.min(parseInt(searchParams.get("per_page") || "20", 10), 100);
     const student_id = searchParams.get("student_id") || "";
     const fee_type = searchParams.get("fee_type") || "";
     const status = searchParams.get("status") || "";
     const date_from = searchParams.get("date_from") || "";
     const date_to = searchParams.get("date_to") || "";
     const summary = searchParams.get("summary") === "true";
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("users").select("role").eq("id", user.id).single();
-    const role = profile?.role || "student";
 
     if (summary) {
       const { data: allPayments } = await supabase
@@ -196,13 +189,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
-    }
 
     const {
       student_id,

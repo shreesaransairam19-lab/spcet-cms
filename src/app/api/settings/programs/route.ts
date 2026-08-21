@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 
 export async function GET() {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { data, error } = await supabase.from("programs").select("*, department:departments(id, name, code)").order("name");
     if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, data, error: null });
@@ -14,7 +16,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
     const { action } = body;
 

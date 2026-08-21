@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 import type { ApiSingleResponse, Student } from "@/types";
 
 export async function GET(
@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { id } = await params;
 
     const { data: student, error } = await supabase
@@ -94,7 +96,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { id } = await params;
     const body = await request.json();
     const { user_id, ...updateData } = body;
@@ -180,7 +184,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { id } = await params;
 
     const { error } = await supabase

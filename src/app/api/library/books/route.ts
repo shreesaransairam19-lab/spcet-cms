@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 import type { ApiListResponse, ApiSingleResponse, LibraryBook } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -97,7 +99,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
 
     const {
@@ -199,7 +203,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
     const { id, ...updateData } = body;
 
@@ -258,7 +264,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

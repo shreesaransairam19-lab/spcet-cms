@@ -1,19 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  requireAuth,
+  requireAdmin,
+  getServiceClient,
+  sanitizeSearch,
+  sanitizeSortBy,
+  sanitizePerPage,
+  sanitizePage,
+} from "@/lib/auth-helpers";
 import type { FacultyFilters, ApiListResponse, Faculty } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { searchParams } = new URL(request.url);
 
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const per_page = parseInt(searchParams.get("per_page") || "10", 10);
-    const search = searchParams.get("search") || "";
+    const page = sanitizePage(searchParams.get("page"));
+    const per_page = sanitizePerPage(searchParams.get("per_page"));
+    const search = sanitizeSearch(searchParams.get("search"));
     const department_id = searchParams.get("department_id") || "";
     const is_hod = searchParams.get("is_hod");
     const is_active = searchParams.get("is_active");
-    const sort_by = searchParams.get("sort_by") || "created_at";
+    const sort_by = sanitizeSortBy(searchParams.get("sort_by"), [
+      "created_at",
+      "updated_at",
+      "employee_id",
+      "designation",
+      "date_of_joining",
+    ]);
     const sort_order = (searchParams.get("sort_order") || "desc") as "asc" | "desc";
 
     let countQuery = supabase
@@ -98,7 +114,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
 
     const {
@@ -123,7 +141,8 @@ export async function POST(request: NextRequest) {
     const seq = (count || 0) + 1;
     const employee_id = `EMP${deptCode.toUpperCase().slice(0, 3)}${seq.toString().padStart(3, "0")}`;
 
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const admin = await getServiceClient();
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email,
       password: employee_id,
       email_confirm: true,
@@ -177,7 +196,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (facultyError) {
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      await admin.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json({
         success: false,
         data: null,
@@ -202,7 +221,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
     const { id, user_id, ...updateData } = body;
 
@@ -289,7 +310,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireFacultyOrAdmin } from "@/lib/auth-helpers";
 import type { ApiListResponse, ApiBulkResponse, AttendanceRecord, AttendanceClass } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -16,13 +18,6 @@ export async function GET(request: NextRequest) {
     const date_to = searchParams.get("date_to") || "";
     const status = searchParams.get("status") || "";
     const attendance_class_id = searchParams.get("attendance_class_id") || "";
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json<ApiListResponse<AttendanceRecord>>({
-        success: false, data: null, error: "Unauthorized",
-      }, { status: 401 });
-    }
 
     const { data: profile } = await supabase
       .from("users").select("role").eq("id", user.id).single();
@@ -194,13 +189,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireFacultyOrAdmin();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
-    }
 
     const {
       subject_id,
@@ -334,7 +326,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireFacultyOrAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
 
     const { id, status, remarks } = body;

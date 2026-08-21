@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "overview";
     const date_from = searchParams.get("date_from") || "";

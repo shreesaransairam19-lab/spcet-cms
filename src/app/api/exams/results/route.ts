@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 import { calculateGrade, calculateSGPA, calculateCGPA } from "@/lib/utils/grade-calculator";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const { searchParams } = new URL(request.url);
 
     const student_id = searchParams.get("student_id") || "";
@@ -139,7 +141,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -255,7 +259,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+    const { supabase } = auth;
     const body = await request.json();
 
     const { data: { user } } = await supabase.auth.getUser();

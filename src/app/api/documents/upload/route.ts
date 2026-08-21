@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth-helpers";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
+    const auth = await requireAuth();
+    if (auth.response) return auth.response;
+    const { supabase, user } = auth;
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
