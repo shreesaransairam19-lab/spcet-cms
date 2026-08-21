@@ -1,0 +1,36 @@
+import { GraduationCap } from "lucide-react";
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 px-4 py-12">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5" />
+        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary/5" />
+        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/3" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
+            <GraduationCap className="h-8 w-8" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold tracking-tight">SPCET CMS</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              St. Peter&apos;s College of Engineering and Technology
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Avadi, Chennai
+            </p>
+          </div>
+        </div>
+
+        {children}
+      </div>
+    </div>
+  );
+}
