@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function POST(request: Request) {
-  let supabaseResponse = NextResponse.json({ success: true, message: "Logged out" });
+  let supabaseResponse = NextResponse.json({ success: true });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,12 +27,25 @@ export async function POST(request: Request) {
     }
   );
 
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut({ scope: "global" });
+  } catch {
+    // continue even if signOut fails
+  }
 
   const cookieHeader = request.headers.get("cookie") || "";
   cookieHeader.split(";").forEach((c) => {
-    const [name] = c.split("=");
-    if (name) supabaseResponse.cookies.set(name.trim(), "", { maxAge: 0, path: "/" });
+    const [rawName] = c.split("=");
+    if (rawName) {
+      const name = rawName.trim();
+      supabaseResponse.cookies.set(name, "", {
+        maxAge: 0,
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+      });
+    }
   });
 
   return supabaseResponse;
