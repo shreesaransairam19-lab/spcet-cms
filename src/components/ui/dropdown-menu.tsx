@@ -30,33 +30,43 @@ const DropdownMenuContext = React.createContext<{
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
 }>({
   open: false,
   setOpen: () => {},
   triggerRef: { current: null },
+  contentRef: { current: null },
 });
 
 function DropdownMenu({ children }: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
       if (
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        contentRef.current && !contentRef.current.contains(target)
       ) {
         setOpen(false);
       }
     };
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open]);
 
   return (
-    <DropdownMenuContext.Provider value={{ open, setOpen, triggerRef }}>
+    <DropdownMenuContext.Provider value={{ open, setOpen, triggerRef, contentRef }}>
       <div className="relative inline-block text-left">{children}</div>
     </DropdownMenuContext.Provider>
   );
@@ -67,7 +77,6 @@ const DropdownMenuTrigger = React.forwardRef<
   DropdownMenuTriggerProps
 >(({ className, children, ...props }, ref) => {
   const { setOpen, open, triggerRef } = React.useContext(DropdownMenuContext);
-
   const mergedRef = React.useCallback(
     (node: HTMLButtonElement | null) => {
       (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
@@ -76,10 +85,10 @@ const DropdownMenuTrigger = React.forwardRef<
     },
     [ref, triggerRef]
   );
-
   return (
     <button
       ref={mergedRef}
+      type="button"
       className={cn("outline-none", className)}
       onClick={() => setOpen(!open)}
       aria-expanded={open}
@@ -95,19 +104,20 @@ const DropdownMenuContent = React.forwardRef<
   HTMLDivElement,
   DropdownMenuContentProps
 >(({ className, align = "center", children, ...props }, ref) => {
-  const { open } = React.useContext(DropdownMenuContext);
-
+  const { open, contentRef } = React.useContext(DropdownMenuContext);
   if (!open) return null;
-
   const alignClass = {
     start: "left-0",
     center: "left-1/2 -translate-x-1/2",
     end: "right-0",
   }[align];
-
   return (
     <div
-      ref={ref}
+      ref={(node) => {
+        (contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       className={cn(
         "absolute z-50 mt-2 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
         alignClass,

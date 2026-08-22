@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description:
     "College Management System for St. Peter's College of Engineering and Technology, Avadi, Chennai",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
   },
   keywords: [
     "SPCET",

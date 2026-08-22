@@ -1,5 +1,3 @@
-import { GraduationCap } from "lucide-react";
-
 export default function AuthLayout({
   children,
 }: {
@@ -15,9 +13,11 @@ export default function AuthLayout({
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-            <GraduationCap className="h-8 w-8" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="SPCET Logo"
+            className="h-14 w-14 rounded-2xl object-contain shadow-lg"
+          />
           <div className="text-center">
             <h1 className="text-xl font-bold tracking-tight">SPCET CMS</h1>
             <p className="mt-1 text-sm text-muted-foreground">

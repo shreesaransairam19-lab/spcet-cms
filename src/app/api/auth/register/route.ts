@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await getSupabaseServerClient();
     const admin = await getSupabaseServiceClient();
 
     const { data: existingStudent } = await admin
@@ -38,20 +37,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: existingUser } = await admin
+      .from("users")
+      .select("id")
+      .ilike("email", email)
+      .maybeSingle();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "This email is already registered" },
+        { status: 409 }
+      );
+    }
+
     const { data: authData, error: authError } =
-      await supabase.auth.signUp({
+      await admin.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: {
-            first_name,
-            last_name,
-            full_name: `${first_name} ${last_name}`,
-          },
+        email_confirm: true,
+        user_metadata: {
+          first_name,
+          last_name,
+          full_name: `${first_name} ${last_name}`,
         },
       });
 
     if (authError) {
+      console.error("Auth create error:", authError);
       return NextResponse.json(
         { error: authError.message },
         { status: 400 }
@@ -77,6 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (userError) {
       console.error("User insert error:", userError);
+      await admin.auth.admin.deleteUser(userId);
       return NextResponse.json(
         { error: "Failed to create user profile: " + userError.message },
         { status: 500 }
@@ -111,6 +124,7 @@ export async function POST(request: NextRequest) {
 
     if (studentError) {
       console.error("Student insert error:", studentError);
+      await admin.auth.admin.deleteUser(userId);
       return NextResponse.json(
         { error: "Failed to create student profile: " + studentError.message },
         { status: 500 }
@@ -119,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Registration successful! Please check your email to verify your account.",
+      message: "Registration successful!",
       user: { id: userId, email, roll_number },
     });
   } catch (error) {

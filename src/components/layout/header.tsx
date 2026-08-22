@@ -132,7 +132,7 @@ function Header({ user, notificationCount = 0, onMenuToggle }: HeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="flex items-center gap-2"
-              onClick={() => router.push("/profile")}
+              onClick={() => router.push(user.role === "student" ? "/student/profile" : "/profile")}
             >
               <User className="h-4 w-4" />
               Profile

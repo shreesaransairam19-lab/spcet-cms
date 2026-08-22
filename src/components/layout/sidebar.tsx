@@ -183,8 +183,8 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-4 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <GraduationCapIcon className="h-5 w-5" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white overflow-hidden">
+          <img src="/logo.png" alt="SPCET" className="h-8 w-8 object-contain" />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-semibold leading-tight">SPCET</span>
@@ -276,7 +276,7 @@ function SidebarContent({
 function Sidebar({ user, open, onOpenChange, notificationCount }: SidebarProps) {
   return (
     <>
-      <aside className="hidden h-screen w-64 border-r bg-card lg:block">
+      <aside className="hidden h-screen w-64 border-r bg-sidebar text-sidebar-foreground lg:block">
         <SidebarContent
           user={user}
           notificationCount={notificationCount}
