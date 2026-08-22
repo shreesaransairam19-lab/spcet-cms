@@ -71,6 +71,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { title: "Students", href: "/students", icon: GraduationCap },
       { title: "Faculty", href: "/faculty", icon: Users },
+      { title: "Subjects", href: "/subjects", icon: BookOpen },
       { title: "Attendance", href: "/attendance", icon: ClipboardCheck },
       { title: "Exams", href: "/exams", icon: FileText },
       { title: "Fees", href: "/fees", icon: IndianRupee },
