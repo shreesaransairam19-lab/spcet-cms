@@ -149,14 +149,6 @@ function Header({ user, notificationCount = 0, onMenuToggle }: HeaderProps) {
               destructive
               className="flex items-center gap-2"
               onClick={async () => {
-                document.cookie.split(";").forEach((c) => {
-                  const name = c.trim().split("=")[0];
-                  if (name) {
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.vercel.app";
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.spcet-cms.vercel.app";
-                  }
-                });
                 try {
                   await fetch("/api/auth/logout", { method: "POST" });
                 } catch {}

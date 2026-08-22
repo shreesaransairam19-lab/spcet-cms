@@ -1,52 +1,39 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
 export async function POST(request: Request) {
-  let supabaseResponse = NextResponse.json({ success: true });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          const cookieHeader = request.headers.get("cookie") || "";
-          const cookies: { name: string; value: string }[] = [];
-          cookieHeader.split(";").forEach((c) => {
-            const [name, ...rest] = c.split("=");
-            if (name) cookies.push({ name: name.trim(), value: rest.join("=").trim() });
-          });
-          return cookies;
-        },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options as any)
-          );
-        },
-      },
-    }
-  );
-
-  try {
-    await supabase.auth.signOut({ scope: "global" });
-  } catch {
-    // continue even if signOut fails
-  }
+  const response = NextResponse.json({ success: true });
 
   const cookieHeader = request.headers.get("cookie") || "";
+  const cookieNames: string[] = [];
   cookieHeader.split(";").forEach((c) => {
     const [rawName] = c.split("=");
-    if (rawName) {
-      const name = rawName.trim();
-      supabaseResponse.cookies.set(name, "", {
-        maxAge: 0,
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-      });
-    }
+    if (rawName) cookieNames.push(rawName.trim());
   });
 
-  return supabaseResponse;
+  const clearHeaders: string[] = [];
+  cookieNames.forEach((name) => {
+    clearHeaders.push(
+      `${name}=; Max-Age=0; Path=/; SameSite=Lax`,
+      `${name}=; Max-Age=0; Path=/; Domain=.vercel.app; SameSite=Lax`,
+      `${name}=; Max-Age=0; Path=/; Domain=spcet-cms.vercel.app; SameSite=Lax`,
+      `${name}=; Max-Age=0; Path=/; Domain=tsr12.vercel.app; SameSite=Lax`
+    );
+  });
+
+  const supabaseProjectRef = "fjgspfjbmvgecesbfuji";
+  const sbCookieNames = [
+    `sb-${supabaseProjectRef}-auth-token`,
+    `sb-${supabaseProjectRef}-auth-token-code-verifier`,
+    `sb-${supabaseProjectRef}-auth-token-expires-at`,
+    `sb-${supabaseProjectRef}-auth-token-refresh-token`,
+    `sb-${supabaseProjectRef}-auth-token-refs`,
+  ];
+
+  sbCookieNames.forEach((name) => {
+    clearHeaders.push(`${name}=; Max-Age=0; Path=/; SameSite=Lax`);
+  });
+
+  response.headers.set("Set-Cookie", clearHeaders.join(", "));
+
+  return response;
 }
