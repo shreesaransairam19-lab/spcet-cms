@@ -261,7 +261,15 @@ function SidebarContent({
               {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
             </span>
           </div>
-          <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+          <button
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", { method: "POST" });
+              } catch {}
+              window.location.replace("/login");
+            }}
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
