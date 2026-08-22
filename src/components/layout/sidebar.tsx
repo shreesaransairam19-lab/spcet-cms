@@ -73,18 +73,12 @@ const adminNavGroups: NavGroup[] = [
       { title: "Students", href: "/students", icon: GraduationCap },
       { title: "Faculty", href: "/faculty", icon: Users },
       { title: "Subjects", href: "/subjects", icon: BookOpen },
-      { title: "Attendance", href: "/attendance", icon: ClipboardCheck },
+      { title: "Attendance & Timetable", href: "/timetable", icon: Calendar },
       { title: "Exams", href: "/exams", icon: FileText },
       { title: "Fees", href: "/fees", icon: IndianRupee },
       { title: "Library", href: "/library", icon: BookOpen },
       { title: "Hostel", href: "/hostel", icon: Home },
       { title: "Transport", href: "/transport", icon: Bus },
-    ],
-  },
-  {
-    title: "Academics",
-    items: [
-      { title: "My Timetable", href: "/timetable", icon: Calendar },
     ],
   },
   {
@@ -108,9 +102,8 @@ const facultyNavGroups: NavGroup[] = [
   {
     title: "Teaching",
     items: [
-      { title: "My Classes", href: "/attendance/mark", icon: BookMarked },
-      { title: "My Timetable", href: "/timetable", icon: Calendar },
-      { title: "Attendance", href: "/attendance/mark", icon: ClipboardCheck },
+      { title: "Classes & Attendance", href: "/timetable", icon: Calendar },
+      { title: "Mark Attendance", href: "/attendance/mark", icon: ClipboardCheck },
       { title: "Exams", href: "/exams", icon: FileText },
     ],
   },
