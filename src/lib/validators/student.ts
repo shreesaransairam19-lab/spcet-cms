@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const studentPersonalSchema = z.object({
   first_name: z.string().min(1, "First name is required").max(100),
-  last_name: z.string().min(1, "Last name is required").max(100),
+  last_name: z.string().min(1, "Last name (initial) is required").max(5),
   date_of_birth: z.string().min(1, "Date of birth is required"),
   gender: z.enum(["male", "female", "other"], { required_error: "Gender is required" }),
   blood_group: z.string().optional().nullable(),

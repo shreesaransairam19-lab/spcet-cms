@@ -20,15 +20,17 @@ const registerSchema = z
       .max(50, "First name is too long"),
     last_name: z
       .string()
-      .min(2, "Last name must be at least 2 characters")
-      .max(50, "Last name is too long"),
+      .min(1, "Last name (initial) is required")
+      .max(5, "Initial should be 1-2 characters"),
     email: z
       .string()
       .email("Please enter a valid email address"),
     roll_number: z
       .string()
-      .min(3, "Roll number is required")
-      .max(20, "Roll number is too long"),
+      .regex(
+        /^\d{2}1127[A-Z]{2,4}R\d{3}$/,
+        "Format: YY1127DEPT RNNN (e.g. 241127ITR068)"
+      ),
     phone: z
       .string()
       .regex(/^\d{10}$/, "Phone number must be exactly 10 digits")
@@ -150,7 +152,7 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-1.5">
               <label htmlFor="last_name" className="text-sm font-medium">
-                Last Name
+                Last Name (Initial)
               </label>
               <Input
                 id="last_name"
