@@ -8,13 +8,19 @@ import {
   MapPin,
   LayoutGrid,
   List,
+  ClipboardCheck,
+  Users,
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface TimetableEntry {
   id: string;
@@ -146,6 +152,7 @@ function EmptyState({ title }: { title: string }) {
 export default function TimetablePage() {
   const { user, role, isLoading: authLoading } = useAuth();
   const [entries, setEntries] = React.useState<TimetableEntry[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [view, setView] = React.useState("daily");
@@ -168,6 +175,17 @@ export default function TimetablePage() {
           throw new Error(json.error || "Failed to load timetable");
         }
         setEntries(json.data.items as TimetableEntry[]);
+
+        if (role === "faculty" && user?.id) {
+          const supabase = getSupabaseBrowserClient();
+          const { data: attData } = await supabase
+            .from("attendance")
+            .select("id, date, subject, total_students, present_count, absent_count, status")
+            .eq("faculty_user_id", user.id)
+            .order("date", { ascending: false })
+            .limit(30);
+          setAttendanceRecords(attData || []);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load timetable");
         setEntries([]);
@@ -226,6 +244,10 @@ export default function TimetablePage() {
           <TabsTrigger value="weekly" className="gap-1.5">
             <LayoutGrid className="h-3.5 w-3.5" />
             Weekly
+          </TabsTrigger>
+          <TabsTrigger value="attendance" className="gap-1.5">
+            <ClipboardCheck className="h-3.5 w-3.5" />
+            Attendance
           </TabsTrigger>
         </TabsList>
 
@@ -352,6 +374,55 @@ export default function TimetablePage() {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            <TabsContent value="attendance" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Attendance Records</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {attendanceRecords.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                      <ClipboardCheck className="h-10 w-10 opacity-40" />
+                      <p className="text-sm font-medium">No attendance records yet</p>
+                      <p className="text-xs">Start marking attendance to see records here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {attendanceRecords.map((att) => {
+                        const pct = att.total_students > 0
+                          ? Math.round((att.present_count / att.total_students) * 100)
+                          : 0;
+                        const color =
+                          pct >= 80 ? "text-emerald-600" : pct >= 60 ? "text-amber-600" : "text-red-600";
+                        return (
+                          <div key={att.id} className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold", pct >= 80 ? "bg-emerald-500/10 text-emerald-600" : pct >= 60 ? "bg-amber-500/10 text-amber-600" : "bg-red-500/10 text-red-600")}>
+                                {pct}%
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{att.subject || "General"}</p>
+                                <p className="text-xs text-muted-foreground">{att.date}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs">
+                              <span className="inline-flex items-center gap-1 text-emerald-600">
+                                <CheckCircle2 className="h-3 w-3" /> {att.present_count} present
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-red-500">
+                                <AlertCircle className="h-3 w-3" /> {att.absent_count} absent
+                              </span>
+                              <span className="text-muted-foreground">{att.total_students} total</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           </>
         )}
