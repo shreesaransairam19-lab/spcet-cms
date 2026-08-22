@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   GraduationCap,
+  Calendar,
   ClipboardCheck,
   FileText,
   IndianRupee,
@@ -81,6 +82,12 @@ const adminNavGroups: NavGroup[] = [
     ],
   },
   {
+    title: "Academics",
+    items: [
+      { title: "My Timetable", href: "/timetable", icon: Calendar },
+    ],
+  },
+  {
     title: "System",
     items: [
       { title: "Notifications", href: "/notifications", icon: Bell },
@@ -102,6 +109,7 @@ const facultyNavGroups: NavGroup[] = [
     title: "Teaching",
     items: [
       { title: "My Classes", href: "/attendance/mark", icon: BookMarked },
+      { title: "My Timetable", href: "/timetable", icon: Calendar },
       { title: "Attendance", href: "/attendance/mark", icon: ClipboardCheck },
       { title: "Exams", href: "/exams", icon: FileText },
     ],
