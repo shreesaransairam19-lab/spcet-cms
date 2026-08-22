@@ -2,47 +2,58 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function requireAuth() {
-  const supabase = await getSupabaseServerClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (error || !user) {
+    if (error || !user) {
+      return {
+        supabase,
+        user: null,
+        response: NextResponse.json(
+          { success: false, error: "Unauthorized" },
+          { status: 401 }
+        ),
+      };
+    }
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.is_active === false) {
+      return {
+        supabase,
+        user: null,
+        response: NextResponse.json(
+          { success: false, error: "Account disabled" },
+          { status: 403 }
+        ),
+      };
+    }
+
     return {
       supabase,
+      user: { ...user, role: profile?.role || "student" },
+      response: null,
+    };
+  } catch (err) {
+    console.error("Auth error:", err);
+    return {
+      supabase: null,
       user: null,
       response: NextResponse.json(
-        { success: false, error: "Unauthorized" },
+        { success: false, error: "Authentication failed" },
         { status: 401 }
       ),
     };
   }
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role, is_active")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_active) {
-    return {
-      supabase,
-      user: null,
-      response: NextResponse.json(
-        { success: false, error: "Account disabled" },
-        { status: 403 }
-      ),
-    };
-  }
-
-  return {
-    supabase,
-    user: { ...user, role: profile?.role || "student" },
-    response: null,
-  };
 }
 
 export async function requireAdmin() {
   const auth = await requireAuth();
-
   if (auth.response) return auth;
 
   if (auth.user?.role !== "admin" && auth.user?.role !== "super_admin") {
@@ -61,7 +72,6 @@ export async function requireAdmin() {
 
 export async function requireFacultyOrAdmin() {
   const auth = await requireAuth();
-
   if (auth.response) return auth;
 
   if (

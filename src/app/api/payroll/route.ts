@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
 
     if (action === "components") {
       const { data, error } = await supabase.from("salary_components").select("*").eq("is_active", true).order("name");
-      if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+      if (error) {
+        if (error.message.includes("does not exist") || error.code === "42P01") {
+          return NextResponse.json({ success: true, data: [], error: null });
+        }
+        return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+      }
       return NextResponse.json({ success: true, data, error: null });
     }
 
@@ -27,7 +32,12 @@ export async function GET(request: NextRequest) {
       if (year) query = query.eq("year", parseInt(year));
 
       const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+      if (error) {
+        if (error.message.includes("does not exist") || error.code === "42P01") {
+          return NextResponse.json({ success: true, data: { items: [], total: 0, totalGross: 0, totalDeductions: 0, totalNet: 0, paid: 0, pending: 0 }, error: null });
+        }
+        return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+      }
 
       const totalGross = (data || []).reduce((sum: number, s: Record<string, unknown>) => sum + (s.gross_earnings as number || 0), 0);
       const totalDeductions = (data || []).reduce((sum: number, s: Record<string, unknown>) => sum + (s.total_deductions as number || 0), 0);
