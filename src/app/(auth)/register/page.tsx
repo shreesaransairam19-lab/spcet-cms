@@ -156,7 +156,7 @@ export default function RegisterPage() {
               </label>
               <Input
                 id="last_name"
-                placeholder="Doe"
+                  placeholder="K"
                 disabled={isLoading}
                 error={errors.last_name?.message}
                 {...register("last_name")}
@@ -185,7 +185,7 @@ export default function RegisterPage() {
             </label>
             <Input
               id="roll_number"
-              placeholder="23CSE001"
+              placeholder="241127ITR001"
               autoComplete="off"
               disabled={isLoading}
               error={errors.roll_number?.message}

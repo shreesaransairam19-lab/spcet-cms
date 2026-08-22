@@ -113,7 +113,6 @@ export async function POST(request: NextRequest) {
       roll_number,
       first_name,
       last_name,
-      phone: phone || null,
       program_id: prog?.id || null,
       department_id: dept?.id || null,
       current_semester: 1,
