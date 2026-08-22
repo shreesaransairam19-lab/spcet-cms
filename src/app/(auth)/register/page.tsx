@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -212,9 +213,8 @@ export default function RegisterPage() {
             <label htmlFor="reg-password" className="text-sm font-medium">
               Password
             </label>
-            <Input
+            <PasswordInput
               id="reg-password"
-              type="password"
               placeholder="Min 8 chars, upper, lower, number"
               autoComplete="new-password"
               disabled={isLoading}
@@ -227,9 +227,8 @@ export default function RegisterPage() {
             <label htmlFor="confirm_password" className="text-sm font-medium">
               Confirm Password
             </label>
-            <Input
+            <PasswordInput
               id="confirm_password"
-              type="password"
               placeholder="Re-enter your password"
               autoComplete="new-password"
               disabled={isLoading}

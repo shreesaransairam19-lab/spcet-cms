@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import { Loader2, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -197,9 +198,8 @@ function LoginForm() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="email-password"
-                  type="password"
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={isLoading}
@@ -261,9 +261,8 @@ function LoginForm() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="roll-password"
-                  type="password"
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={isLoading}

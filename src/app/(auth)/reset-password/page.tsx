@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -116,9 +117,8 @@ export default function ResetPasswordPage() {
             <label htmlFor="new-password" className="text-sm font-medium">
               New Password
             </label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               placeholder="Min 8 chars, upper, lower, number"
               autoComplete="new-password"
               disabled={isLoading}
@@ -131,9 +131,8 @@ export default function ResetPasswordPage() {
             <label htmlFor="reset-confirm" className="text-sm font-medium">
               Confirm Password
             </label>
-            <Input
+            <PasswordInput
               id="reset-confirm"
-              type="password"
               placeholder="Re-enter your password"
               autoComplete="new-password"
               disabled={isLoading}
