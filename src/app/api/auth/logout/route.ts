@@ -1,24 +1,16 @@
 import { NextResponse } from "next/server";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function POST(request: Request) {
-  const response = NextResponse.json({ success: true });
+async function handleLogout() {
+  try {
+    const supabase = await getSupabaseServerClient();
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.error("SignOut error:", e);
+  }
 
-  const cookieHeader = request.headers.get("cookie") || "";
-  const cookieNames: string[] = [];
-  cookieHeader.split(";").forEach((c) => {
-    const [rawName] = c.split("=");
-    if (rawName) cookieNames.push(rawName.trim());
-  });
-
-  const clearHeaders: string[] = [];
-  cookieNames.forEach((name) => {
-    clearHeaders.push(
-      `${name}=; Max-Age=0; Path=/; SameSite=Lax`,
-      `${name}=; Max-Age=0; Path=/; Domain=.vercel.app; SameSite=Lax`,
-      `${name}=; Max-Age=0; Path=/; Domain=spcet-cms.vercel.app; SameSite=Lax`,
-      `${name}=; Max-Age=0; Path=/; Domain=tsr12.vercel.app; SameSite=Lax`
-    );
-  });
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://spcet-cms.vercel.app";
+  const response = NextResponse.redirect(new URL("/login", baseUrl));
 
   const supabaseProjectRef = "fjgspfjbmvgecesbfuji";
   const sbCookieNames = [
@@ -29,11 +21,23 @@ export async function POST(request: Request) {
     `sb-${supabaseProjectRef}-auth-token-refs`,
   ];
 
+  const clearHeaders: string[] = [];
   sbCookieNames.forEach((name) => {
-    clearHeaders.push(`${name}=; Max-Age=0; Path=/; SameSite=Lax`);
+    clearHeaders.push(
+      `${name}=; Max-Age=0; Path=/; SameSite=Lax; Secure`,
+      `${name}=; Max-Age=0; Path=/; SameSite=Lax`
+    );
   });
 
   response.headers.set("Set-Cookie", clearHeaders.join(", "));
 
   return response;
+}
+
+export async function POST() {
+  return handleLogout();
+}
+
+export async function GET() {
+  return handleLogout();
 }

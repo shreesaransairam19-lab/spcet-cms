@@ -148,15 +148,11 @@ function Header({ user, notificationCount = 0, onMenuToggle }: HeaderProps) {
             <DropdownMenuItem
               destructive
               className="flex items-center gap-2"
-              onClick={async () => {
-                try {
-                  await fetch("/api/auth/logout", { method: "POST" });
-                } catch {}
-                window.location.replace("/login");
-              }}
             >
-              <LogOut className="h-4 w-4" />
-              Log out
+              <a href="/api/auth/logout" className="flex items-center gap-2 w-full">
+                <LogOut className="h-4 w-4" />
+                Log out
+              </a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
