@@ -26,9 +26,9 @@ export function FilterSelect({
         onChange={(e) => onChange(e.target.value)}
         className="flex h-9 appearance-none rounded-md border border-input bg-transparent px-3 py-1 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <option value="">{placeholder}</option>
+        <option className="bg-background text-foreground" value="">{placeholder}</option>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option className="bg-background text-foreground" key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
