@@ -61,6 +61,30 @@ export function FacultyForm({ open, onOpenChange, faculty, onSuccess }: FacultyF
   const [step, setStep] = React.useState("personal");
   const [departments, setDepartments] = React.useState<Department[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
+  const [photoUploading, setPhotoUploading] = React.useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload/avatar", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.success) {
+        form.setValue("photo_url", data.url);
+        toast({ title: "Photo uploaded", variant: "success" });
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Failed", variant: "destructive" });
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = "";
+    }
+  };
   const { toast } = useToast();
   const supabase = getSupabaseBrowserClient();
   const isEditing = !!faculty;
@@ -317,20 +341,38 @@ export function FacultyForm({ open, onOpenChange, faculty, onSuccess }: FacultyF
 
             <TabsContent value="documents">
               <div className="grid grid-cols-1 gap-4">
-                <Input
-                  label="Photo URL"
-                  placeholder="https://..."
-                  {...form.register("photo_url")}
-                />
-                {form.watch("photo_url") && (
-                  <div className="mt-2">
-                    <img
-                      src={form.watch("photo_url")!}
-                      alt="Preview"
-                      className="h-32 w-32 rounded-full object-cover border"
-                    />
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Profile Photo</label>
+                  <div className="flex items-center gap-4">
+                    {form.watch("photo_url") && (
+                      <img
+                        src={form.watch("photo_url")!}
+                        alt="Preview"
+                        className="h-20 w-20 rounded-full object-cover border"
+                      />
+                    )}
+                    <label className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-dashed border-input bg-muted/50 px-4 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                      <Loader2 className={`h-4 w-4 ${photoUploading ? "animate-spin" : "hidden"}`} />
+                      {photoUploading ? "Uploading..." : "Choose Photo"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                        disabled={photoUploading}
+                      />
+                    </label>
                   </div>
-                )}
+                  {form.watch("photo_url") && (
+                    <button
+                      type="button"
+                      className="w-fit text-xs text-destructive hover:underline"
+                      onClick={() => form.setValue("photo_url", "")}
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
