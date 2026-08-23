@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-helpers";
+import { requireAuth, getServiceClient } from "@/lib/auth-helpers";
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAuth();
     if (auth.response) return auth.response;
-    const { supabase } = auth;
+    const admin = getServiceClient();
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await admin.storage
       .from("avatars")
       .upload(fileName, buffer, { contentType: file.type, upsert: false });
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(fileName);
+    const { data: { publicUrl } } = admin.storage.from("avatars").getPublicUrl(fileName);
 
     return NextResponse.json({ success: true, url: publicUrl });
   } catch {
