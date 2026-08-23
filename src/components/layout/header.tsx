@@ -137,13 +137,15 @@ function Header({ user, notificationCount = 0, onMenuToggle }: HeaderProps) {
               <User className="h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={() => router.push("/settings")}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
+            {user.role !== "student" && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => router.push("/settings")}
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               destructive
