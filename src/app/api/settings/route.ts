@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const auth = await requireAuth();
     if (auth.response) return auth.response;
     const { supabase } = auth;
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category") || "";
 
-    let query = supabase.from("college_settings").select("*").order("key");
-    if (category) query = query.eq("category", category);
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.from("college_settings").select("*").order("setting_key");
     if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, data, error: null });
   } catch (err) {
@@ -24,7 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin();
     if (auth.response) return auth.response;
-    const { supabase, user } = auth;
+    const { supabase } = auth;
     const body = await request.json();
     const { settings } = body;
 
@@ -34,16 +29,12 @@ export async function POST(request: NextRequest) {
 
     for (const setting of settings) {
       await supabase.from("college_settings").upsert({
-        key: setting.key,
-        value: setting.value,
-        category: setting.category || "general",
-        description: setting.description || null,
-        updated_by: user?.id || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "key" });
+        setting_key: setting.key,
+        setting_value: setting.value,
+      }, { onConflict: "setting_key" });
     }
 
-    return NextResponse.json({ success: true, data: null, error: null, message: "Settings updated" });
+    return NextResponse.json({ success: true, data: null, error: null });
   } catch (err) {
     return NextResponse.json({ success: false, data: null, error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
   }

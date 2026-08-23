@@ -31,10 +31,11 @@ export default function SettingsPage() {
 
   React.useEffect(() => {
     async function load() {
-      const { data } = await supabase.from("college_settings").select("setting_key, setting_value");
-      if (data) {
+      const res = await fetch("/api/settings");
+      const json = await res.json();
+      if (json.success && json.data) {
         const map: Record<string, string> = {};
-        data.forEach((s: { setting_key: string; setting_value: string }) => {
+        json.data.forEach((s: { setting_key: string; setting_value: string }) => {
           map[s.setting_key] = s.setting_value;
         });
         setSettings(map);
@@ -46,7 +47,7 @@ export default function SettingsPage() {
         .catch(() => {});
     }
     load();
-  }, [supabase]);
+  }, []);
 
   const updateSetting = (key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
