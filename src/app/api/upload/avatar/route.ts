@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireAuth();
     if (auth.response) return auth.response;
-    const admin = getServiceClient();
+    const admin = await getServiceClient();
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
