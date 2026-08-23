@@ -39,6 +39,8 @@ export default function StudentsPage() {
   const [departmentFilter, setDepartmentFilter] = React.useState("");
   const [programFilter, setProgramFilter] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
+  const [batchYearFilter, setBatchYearFilter] = React.useState("");
+  const [semesterFilter, setSemesterFilter] = React.useState("");
   const [sortBy, setSortBy] = React.useState<string>("created_at");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
 
@@ -72,6 +74,8 @@ export default function StudentsPage() {
       if (departmentFilter) params.set("department_id", departmentFilter);
       if (programFilter) params.set("program_id", programFilter);
       if (statusFilter) params.set("is_active", statusFilter);
+      if (batchYearFilter) params.set("batch_year", batchYearFilter);
+      if (semesterFilter) params.set("semester", semesterFilter);
       params.set("sort_by", sortBy);
       params.set("sort_order", sortOrder);
 
@@ -88,7 +92,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, departmentFilter, programFilter, statusFilter, sortBy, sortOrder, toast]);
+  }, [page, search, departmentFilter, programFilter, statusFilter, batchYearFilter, semesterFilter, sortBy, sortOrder, toast]);
 
   React.useEffect(() => {
     fetchStudents();
@@ -157,6 +161,15 @@ export default function StudentsPage() {
     { value: "true", label: "Active" },
     { value: "false", label: "Inactive" },
   ];
+  const currentYear = new Date().getFullYear();
+  const batchYearFilterOptions = Array.from({ length: 6 }, (_, i) => ({
+    value: String(currentYear - 5 + i),
+    label: String(currentYear - 5 + i),
+  }));
+  const semesterFilterOptions = Array.from({ length: 8 }, (_, i) => ({
+    value: String(i + 1),
+    label: `Semester ${i + 1}`,
+  }));
 
   const columns: ColumnDef<Student>[] = [
     {
@@ -283,6 +296,18 @@ export default function StudentsPage() {
           onChange={(val) => { setStatusFilter(val); setPage(1); }}
           options={statusFilterOptions}
           placeholder="All Status"
+        />
+        <FilterSelect
+          value={batchYearFilter}
+          onChange={(val) => { setBatchYearFilter(val); setPage(1); }}
+          options={batchYearFilterOptions}
+          placeholder="All Batches"
+        />
+        <FilterSelect
+          value={semesterFilter}
+          onChange={(val) => { setSemesterFilter(val); setPage(1); }}
+          options={semesterFilterOptions}
+          placeholder="All Semesters"
         />
       </div>
 

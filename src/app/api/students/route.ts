@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
       ? parseInt(searchParams.get("batch_year")!, 10)
       : undefined;
     const is_active = searchParams.get("is_active");
+    const semester = searchParams.get("semester")
+      ? parseInt(searchParams.get("semester")!, 10)
+      : undefined;
     const sort_by_raw = sanitizeSortBy(searchParams.get("sort_by"), [
       "created_at",
       "updated_at",
@@ -74,6 +77,10 @@ export async function GET(request: NextRequest) {
       const statusVal = active ? "active" : "inactive";
       countQuery = countQuery.eq("status", statusVal);
       dataQuery = dataQuery.eq("status", statusVal);
+    }
+    if (semester) {
+      countQuery = countQuery.eq("current_semester", semester);
+      dataQuery = dataQuery.eq("current_semester", semester);
     }
 
     const { count, error: countError } = await countQuery;
