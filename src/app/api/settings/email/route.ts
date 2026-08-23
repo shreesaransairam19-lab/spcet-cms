@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, readFile } from "fs/promises";
 import { join } from "path";
-import { requireAuth, requireAdmin } from "@/lib/auth-helpers";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 const ENV_PATH = join(process.cwd(), ".env.local");
 
@@ -56,7 +56,46 @@ async function writeEnvFile(updates: Record<string, string>): Promise<void> {
     }
   }
 
-  await writeFile(ENV_PATH, newLines.join("\n"), "utf-8");
+  await writeFile(ENV_PATH, newLines.join("\n"));
+}
+
+function isConfigured(env: Record<string, string>): boolean {
+  return !!(env.SMTP_USER && env.SMTP_PASS && env.SMTP_USER.length > 0 && env.SMTP_PASS.length > 0);
+}
+
+export async function GET() {
+  try {
+    const auth = await requireAdmin();
+    if (auth.response) return auth.response;
+
+    const envVars = await readEnvFile();
+
+    const merged = { ...envVars };
+    if (!merged.SMTP_USER && process.env.SMTP_USER) merged.SMTP_USER = process.env.SMTP_USER;
+    if (!merged.SMTP_PASS && process.env.SMTP_PASS) merged.SMTP_PASS = process.env.SMTP_PASS;
+
+    return NextResponse.json({
+      success: true,
+      configured: isConfigured(merged),
+      settings: {
+        smtp_host: merged.SMTP_HOST || "",
+        smtp_port: merged.SMTP_PORT || "587",
+        smtp_user: merged.SMTP_USER || "",
+        email_from_name: merged.EMAIL_FROM_NAME || "SPCET CMS",
+      },
+    });
+  } catch {
+    return NextResponse.json({
+      success: true,
+      configured: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+      settings: {
+        smtp_host: process.env.SMTP_HOST || "smtp.gmail.com",
+        smtp_port: process.env.SMTP_PORT || "587",
+        smtp_user: process.env.SMTP_USER || "",
+        email_from_name: process.env.EMAIL_FROM_NAME || "SPCET CMS",
+      },
+    });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -92,18 +131,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await writeEnvFile({
-      SMTP_HOST: "smtp.gmail.com",
-      SMTP_PORT: "587",
-      SMTP_USER: smtp_user,
-      SMTP_PASS: cleanPassword,
-      EMAIL_FROM_NAME: email_from_name || "SPCET CMS",
-      EMAIL_FROM_ADDRESS: smtp_user,
-    });
+    try {
+      await writeEnvFile({
+        SMTP_HOST: "smtp.gmail.com",
+        SMTP_PORT: "587",
+        SMTP_USER: smtp_user,
+        SMTP_PASS: cleanPassword,
+        EMAIL_FROM_NAME: email_from_name || "SPCET CMS",
+        EMAIL_FROM_ADDRESS: smtp_user,
+      });
+    } catch {
+      // On Vercel, file writes fail. Store in DB instead.
+      const admin = await (await import("@/lib/auth-helpers")).getServiceClient();
+      await admin.from("college_settings").upsert([
+        { setting_key: "smtp_host", setting_value: "smtp.gmail.com" },
+        { setting_key: "smtp_port", setting_value: "587" },
+        { setting_key: "smtp_user", setting_value: smtp_user },
+        { setting_key: "smtp_pass", setting_value: cleanPassword },
+        { setting_key: "email_from_name", setting_value: email_from_name || "SPCET CMS" },
+      ], { onConflict: "setting_key" });
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Email configuration saved. Restart the app to apply.",
+      message: "Email configuration saved.",
     });
   } catch (error: unknown) {
     const err = error as { message?: string };
@@ -112,15 +163,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  const auth = await requireAuth();
-  if (auth.response) return auth.response;
-  const env = await readEnvFile();
-  return NextResponse.json({
-    configured: !!(env.SMTP_USER && env.SMTP_PASS),
-    smtp_user: env.SMTP_USER || "",
-    email_from_name: env.EMAIL_FROM_NAME || "SPCET CMS",
-  });
 }
