@@ -26,13 +26,14 @@ export async function GET(request: NextRequest) {
       ? parseInt(searchParams.get("batch_year")!, 10)
       : undefined;
     const is_active = searchParams.get("is_active");
-    const sort_by = sanitizeSortBy(searchParams.get("sort_by"), [
+    const sort_by_raw = sanitizeSortBy(searchParams.get("sort_by"), [
       "created_at",
       "updated_at",
       "roll_number",
       "semester",
       "batch_year",
     ]);
+    const sort_by = sort_by_raw === "semester" ? "current_semester" : sort_by_raw;
     const sort_order = (searchParams.get("sort_order") || "desc") as "asc" | "desc";
 
     let countQuery = supabase
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
       .from("students")
       .select(`
         *,
-        user:users(id, full_name, email, phone, avatar_url, is_active),
+        user:users(id, email, phone, is_active),
         department:departments(id, name, code),
         program:programs(id, name, code)
       `);
@@ -70,8 +71,9 @@ export async function GET(request: NextRequest) {
     }
     if (typeof is_active === "string" && is_active !== "") {
       const active = is_active === "true";
-      countQuery = countQuery.eq("is_active", active);
-      dataQuery = dataQuery.eq("is_active", active);
+      const statusVal = active ? "active" : "inactive";
+      countQuery = countQuery.eq("status", statusVal);
+      dataQuery = dataQuery.eq("status", statusVal);
     }
 
     const { count, error: countError } = await countQuery;
@@ -101,10 +103,31 @@ export async function GET(request: NextRequest) {
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);
 
+    const enriched = (data || []).map((s: Record<string, unknown>) => {
+      const firstName = (s.first_name as string) || "";
+      const lastName = (s.last_name as string) || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      const user = s.user as Record<string, unknown> | null;
+      if (user) {
+        user.full_name = fullName || (user.email as string)?.split("@")[0] || "";
+        user.avatar_url = null;
+      } else {
+        s.user = { id: s.user_id, full_name: fullName, email: "", phone: null, avatar_url: null, is_active: true };
+      }
+      s.semester = s.current_semester;
+      s.is_active = s.status === "active";
+      s.phone = s.phone || null;
+      s.is_hosteler = s.is_hosteler || false;
+      s.is_transport_user = s.is_transport_user || false;
+      s.aadhar_number = s.aadhar_number || null;
+      s.category = s.category || null;
+      return s;
+    });
+
     return NextResponse.json<ApiListResponse<Student>>({
       success: true,
       data: {
-        items: data as Student[],
+        items: enriched as unknown as Student[],
         total,
         page,
         per_page,

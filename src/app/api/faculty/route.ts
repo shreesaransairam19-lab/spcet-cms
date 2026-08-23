@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       .from("faculty")
       .select(`
         *,
-        user:users(id, full_name, email, phone, avatar_url, is_active),
+        user:users(id, email, phone, is_active),
         department:departments(id, name, code)
       `);
 
@@ -90,10 +90,24 @@ export async function GET(request: NextRequest) {
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);
 
+    const enriched = (data || []).map((f: Record<string, unknown>) => {
+      const firstName = (f.first_name as string) || "";
+      const lastName = (f.last_name as string) || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      const user = f.user as Record<string, unknown> | null;
+      if (user) {
+        user.full_name = fullName || (user.email as string)?.split("@")[0] || "";
+        user.avatar_url = null;
+      } else {
+        f.user = { id: f.user_id, full_name: fullName, email: "", phone: null, avatar_url: null, is_active: true };
+      }
+      return f;
+    });
+
     return NextResponse.json<ApiListResponse<Faculty>>({
       success: true,
       data: {
-        items: data as Faculty[],
+        items: enriched as unknown as Faculty[],
         total,
         page,
         per_page,

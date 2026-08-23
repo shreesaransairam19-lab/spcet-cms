@@ -22,11 +22,18 @@ export async function GET(request: NextRequest) {
     if (action === "allocations") {
       const { data, error } = await supabase.from("transport_allocations").select(`
         *,
-        student:students(id, roll_number, user:users(full_name)),
+        student:students(id, roll_number, first_name, last_name, user:users(id, email)),
         route:transport_routes(id, name, code, vehicle_number, driver_name, driver_phone),
         stop:transport_stops(id, name, arrival_time, departure_time)
-      `).eq("is_active", true).order("allocation_date", { ascending: false });
+      `      ).eq("is_active", true).order("allocation_date", { ascending: false });
       if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+      (data || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
       return NextResponse.json({ success: true, data, error: null });
     }
 

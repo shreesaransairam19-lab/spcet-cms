@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
       const { data: students, error: studentError } = await supabase
         .from("students")
         .select(`
-          id, roll_number, semester, program_id,
-          user:users(full_name, email),
+          id, roll_number, semester, program_id, first_name, last_name,
+          user:users(id, email),
           program:programs(id, name),
           department:departments(name)
         `)
@@ -27,6 +27,11 @@ export async function GET(request: NextRequest) {
       if (studentError) {
         return NextResponse.json({ success: false, data: null, error: studentError.message }, { status: 500 });
       }
+
+      (students || []).forEach((item: Record<string, unknown>) => {
+        const su = item.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${item.first_name || ""} ${item.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      });
 
       const results = await Promise.all(
         (students || []).map(async (student) => {
@@ -77,8 +82,8 @@ export async function GET(request: NextRequest) {
       const { data: student } = await supabase
         .from("students")
         .select(`
-          id, roll_number, semester, program_id,
-          user:users(full_name, email),
+          id, roll_number, semester, program_id, first_name, last_name,
+          user:users(id, email),
           program:programs(id, name),
           department:departments(name)
         `)
@@ -87,6 +92,12 @@ export async function GET(request: NextRequest) {
 
       if (!student) {
         return NextResponse.json({ success: false, data: null, error: "Student not found" }, { status: 404 });
+      }
+
+      const sUser = (student as unknown as Record<string, unknown>).user as Record<string, unknown> | null;
+      if (sUser) {
+        const sRec = student as unknown as Record<string, unknown>;
+        sUser.full_name = `${sRec.first_name || ""} ${sRec.last_name || ""}`.trim() || (sUser.email as string)?.split("@")[0] || "";
       }
 
       const { data: feeStructures } = await supabase

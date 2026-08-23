@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         .from("attendance_records")
         .select(`
           *,
-          student:students(id, roll_number, user:users(full_name)),
+          student:students(id, roll_number, first_name, last_name, user:users(id, email)),
           attendance_class:attendance_classes(id, subject_id, date, subject:subjects(id, name, code))
         `)
         .eq("attendance_class_id", attendance_class_id)
@@ -39,6 +39,14 @@ export async function GET(request: NextRequest) {
           success: false, data: null, error: error.message,
         }, { status: 500 });
       }
+
+      (records || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
 
       return NextResponse.json<ApiListResponse<AttendanceRecord>>({
         success: true,
@@ -125,7 +133,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         subject:subjects(id, name, code, program:programs(name), semester_number),
-        faculty:faculty(id, employee_id, user:users(full_name))
+        faculty:faculty(id, employee_id, first_name, last_name, user:users(id, email))
       `);
 
     if (subject_id) classQuery = classQuery.eq("subject_id", subject_id);
@@ -164,6 +172,14 @@ export async function GET(request: NextRequest) {
         success: false, data: null, error: error.message,
       }, { status: 500 });
     }
+
+    (classes || []).forEach((item: Record<string, unknown>) => {
+      const fac = item.faculty as Record<string, unknown> | null;
+      if (fac) {
+        const fu = fac.user as Record<string, unknown> | null;
+        if (fu) fu.full_name = `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (fu.email as string)?.split("@")[0] || "";
+      }
+    });
 
     const total = count || 0;
     return NextResponse.json<ApiListResponse<AttendanceClass>>({

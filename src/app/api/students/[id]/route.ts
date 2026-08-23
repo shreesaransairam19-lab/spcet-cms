@@ -16,7 +16,7 @@ export async function GET(
       .from("students")
       .select(`
         *,
-        user:users(id, full_name, email, phone, avatar_url, is_active),
+        user:users(id, email, phone, is_active),
         department:departments(id, name, code),
         program:programs(id, name, code, total_semesters, duration_years)
       `)
@@ -30,6 +30,23 @@ export async function GET(
         error: "Student not found",
       }, { status: 404 });
     }
+
+    const firstName = (student as Record<string, unknown>).first_name as string || "";
+    const lastName = (student as Record<string, unknown>).last_name as string || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+    const userObj = (student as Record<string, unknown>).user as Record<string, unknown> | null;
+    if (userObj) {
+      userObj.full_name = fullName || (userObj.email as string)?.split("@")[0] || "";
+      userObj.avatar_url = null;
+    } else {
+      (student as Record<string, unknown>).user = { id: (student as Record<string, unknown>).user_id, full_name: fullName, email: "", phone: null, avatar_url: null, is_active: true };
+    }
+    (student as Record<string, unknown>).semester = (student as Record<string, unknown>).current_semester;
+    (student as Record<string, unknown>).is_active = (student as Record<string, unknown>).status === "active";
+    (student as Record<string, unknown>).is_hosteler = (student as Record<string, unknown>).is_hosteler || false;
+    (student as Record<string, unknown>).is_transport_user = (student as Record<string, unknown>).is_transport_user || false;
+    (student as Record<string, unknown>).aadhar_number = (student as Record<string, unknown>).aadhar_number || null;
+    (student as Record<string, unknown>).category = (student as Record<string, unknown>).category || null;
 
     const { data: attendance } = await supabase
       .from("attendance_records")

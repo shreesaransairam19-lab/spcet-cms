@@ -17,20 +17,20 @@ export async function POST(request: NextRequest) {
 
     if (data_type === "students") {
       const { data: students } = await supabase.from("students").select(`
-        roll_number, semester, batch_year, gender,
-        user:users(full_name, email, phone),
+        roll_number, semester, batch_year, gender, first_name, last_name,
+        user:users(id, email, phone),
         department:departments(name, code),
         program:programs(name, code)
       `).eq("is_active", true);
 
       data = (students || []).map((s) => {
         const std = s as Record<string, unknown>;
-        const user = std.user as { full_name: string; email: string; phone: string } | null;
+        const user = std.user as { email: string; phone: string } | null;
         const dept = std.department as { name: string; code: string } | null;
         const prog = std.program as { name: string; code: string } | null;
         return {
           roll_number: std.roll_number,
-          full_name: user?.full_name || "",
+          full_name: `${std.first_name || ""} ${std.last_name || ""}`.trim() || (user?.email as string)?.split("@")[0] || "",
           email: user?.email || "",
           phone: user?.phone || "",
           department: dept?.name || "",
@@ -42,18 +42,18 @@ export async function POST(request: NextRequest) {
       });
     } else if (data_type === "faculty") {
       const { data: faculty } = await supabase.from("faculty").select(`
-        employee_id, designation, basic_salary,
-        user:users(full_name, email, phone),
+        employee_id, designation, basic_salary, first_name, last_name,
+        user:users(id, email, phone),
         department:departments(name, code)
       `).eq("is_active", true);
 
       data = (faculty || []).map((f) => {
         const fac = f as Record<string, unknown>;
-        const user = fac.user as { full_name: string; email: string; phone: string } | null;
+        const user = fac.user as { email: string; phone: string } | null;
         const dept = fac.department as { name: string; code: string } | null;
         return {
           employee_id: fac.employee_id,
-          full_name: user?.full_name || "",
+          full_name: `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (user?.email as string)?.split("@")[0] || "",
           email: user?.email || "",
           phone: user?.phone || "",
           department: dept?.name || "",

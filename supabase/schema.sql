@@ -109,6 +109,8 @@ CREATE TABLE users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email VARCHAR(255) UNIQUE,
     phone VARCHAR(15) UNIQUE,
+    full_name VARCHAR(255),
+    avatar_url TEXT,
     role VARCHAR(20) NOT NULL CHECK (role IN ('super_admin', 'admin', 'hod', 'faculty', 'student')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     last_login TIMESTAMPTZ,

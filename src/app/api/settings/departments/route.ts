@@ -6,8 +6,15 @@ export async function GET() {
     const auth = await requireAuth();
     if (auth.response) return auth.response;
     const { supabase } = auth;
-    const { data, error } = await supabase.from("departments").select("*, hod:faculty(id, user:users(full_name))").order("name");
+    const { data, error } = await supabase.from("departments").select("*, hod:faculty(id, first_name, last_name, user:users(id, email))").order("name");
     if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+    (data || []).forEach((item: Record<string, unknown>) => {
+      const fac = item.hod as Record<string, unknown> | null;
+      if (fac) {
+        const fu = fac.user as Record<string, unknown> | null;
+        if (fu) fu.full_name = `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (fu.email as string)?.split("@")[0] || "";
+      }
+    });
     return NextResponse.json({ success: true, data, error: null });
   } catch (err) {
     return NextResponse.json({ success: false, data: null, error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });

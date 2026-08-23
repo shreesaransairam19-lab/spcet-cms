@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
     let studentQuery = supabase
       .from("students")
       .select(`
-        id, roll_number,
-        user:users(full_name),
+        id, roll_number, first_name, last_name,
+        user:users(id, email),
         department:departments(id, name),
         program:programs(id, name)
       `)
@@ -119,9 +119,10 @@ export async function GET(request: NextRequest) {
       }>();
 
       for (const student of students) {
+        const su = student.user as unknown as { email?: string } | null;
         studentStats.set(student.id, {
           roll_number: student.roll_number,
-          full_name: (student.user as unknown as { full_name: string })?.full_name || "",
+          full_name: `${student.first_name || ""} ${student.last_name || ""}`.trim() || su?.email?.split("@")[0] || "",
           subjectStats: new Map(),
         });
       }

@@ -52,8 +52,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === "employees") {
-      const { data: faculty } = await supabase.from("faculty").select("id, employee_id, basic_salary, designation, user:users(full_name)").eq("is_active", true);
-      const { data: staff } = await supabase.from("admin_staff").select("id, employee_id, basic_salary, designation, user:users(full_name)").eq("is_active", true);
+      const { data: faculty } = await supabase.from("faculty").select("id, employee_id, basic_salary, designation, first_name, last_name, user:users(id, email)").eq("is_active", true);
+      const { data: staff } = await supabase.from("admin_staff").select("id, employee_id, basic_salary, designation, first_name, last_name, user:users(id, email)").eq("is_active", true);
+
+      const enrichUser = (row: Record<string, unknown>) => {
+        const u = row.user as Record<string, unknown> | null;
+        if (u) u.full_name = `${row.first_name || ""} ${row.last_name || ""}`.trim() || (u.email as string)?.split("@")[0] || "";
+      };
+      (faculty || []).forEach(enrichUser);
+      (staff || []).forEach(enrichUser);
 
       const employees = [
         ...(faculty || []).map((f) => ({ ...f, type: "faculty" })),
@@ -67,7 +74,7 @@ export async function GET(request: NextRequest) {
     const per_page = parseInt(searchParams.get("per_page") || "10", 10);
 
     let query = supabase.from("monthly_salaries").select(`
-      *, employee:faculty(id, employee_id, user:users(full_name))
+      *, employee:faculty(id, employee_id, first_name, last_name, user:users(id, email))
     `);
     if (month) query = query.eq("month", parseInt(month));
     if (year) query = query.eq("year", parseInt(year));
@@ -77,6 +84,14 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query.order("created_at", { ascending: false }).range(from, from + per_page - 1);
     if (error) return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
+
+    (data || []).forEach((item: Record<string, unknown>) => {
+      const fac = item.employee as Record<string, unknown> | null;
+      if (fac) {
+        const fu = fac.user as Record<string, unknown> | null;
+        if (fu) fu.full_name = `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (fu.email as string)?.split("@")[0] || "";
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -104,7 +119,7 @@ export async function POST(request: NextRequest) {
       const earnings = (components || []).filter((c: Record<string, unknown>) => c.type === "earning");
       const deductions = (components || []).filter((c: Record<string, unknown>) => c.type === "deduction");
 
-      let query = supabase.from("faculty").select("id, basic_salary, user:users(full_name)").eq("is_active", true);
+      let query = supabase.from("faculty").select("id, basic_salary, user:users(id, email)").eq("is_active", true);
       if (employee_ids && employee_ids.length > 0) query = query.in("id", employee_ids);
 
       const { data: facultyList } = await query;

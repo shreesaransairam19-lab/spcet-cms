@@ -18,8 +18,8 @@ export async function GET(
         payment:fee_payments(
           *,
           student:students(
-            id, roll_number, semester,
-            user:users(full_name, email),
+            id, roll_number, semester, first_name, last_name,
+            user:users(id, email),
             program:programs(name),
             department:departments(name)
           ),
@@ -36,6 +36,15 @@ export async function GET(
       return NextResponse.json({
         success: false, data: null, error: "Receipt not found",
       }, { status: 404 });
+    }
+
+    const payment = (receipt as unknown as Record<string, unknown>).payment as Record<string, unknown> | null;
+    if (payment) {
+      const student = payment.student as Record<string, unknown> | null;
+      if (student) {
+        const su = student.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      }
     }
 
     return NextResponse.json({ success: true, data: receipt, error: null });

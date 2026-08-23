@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     let countQuery = supabase.from("documents").select("*", { count: "exact", head: true });
     let dataQuery = supabase.from("documents").select(`
       *,
-      student:students(id, roll_number, user:users(full_name)),
-      faculty:faculty(id, employee_id, user:users(full_name))
+      student:students(id, roll_number, first_name, last_name, user:users(id, email)),
+      faculty:faculty(id, employee_id, first_name, last_name, user:users(id, email))
     `);
 
     if (type) {
@@ -42,6 +42,19 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await dataQuery.order("created_at", { ascending: false }).range(from, to);
     if (error) return NextResponse.json<ApiListResponse<Document>>({ success: false, data: null, error: error.message }, { status: 500 });
+
+    (data || []).forEach((item: Record<string, unknown>) => {
+      const student = item.student as Record<string, unknown> | null;
+      if (student) {
+        const su = student.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      }
+      const fac = item.faculty as Record<string, unknown> | null;
+      if (fac) {
+        const fu = fac.user as Record<string, unknown> | null;
+        if (fu) fu.full_name = `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (fu.email as string)?.split("@")[0] || "";
+      }
+    });
 
     const total = count || 0;
     return NextResponse.json({

@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     let dataQuery = supabase.from("library_issues").select(`
       *,
       book:library_books(id, title, author, isbn),
-      student:students(id, roll_number, user:users(full_name, email)),
-      faculty:faculty(id, employee_id, user:users(full_name, email))
+      student:students(id, roll_number, first_name, last_name, user:users(id, email)),
+      faculty:faculty(id, employee_id, first_name, last_name, user:users(id, email))
     `);
 
     if (status) {
@@ -71,6 +71,19 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    (data || []).forEach((item: Record<string, unknown>) => {
+      const student = item.student as Record<string, unknown> | null;
+      if (student) {
+        const su = student.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      }
+      const fac = item.faculty as Record<string, unknown> | null;
+      if (fac) {
+        const fu = fac.user as Record<string, unknown> | null;
+        if (fu) fu.full_name = `${fac.first_name || ""} ${fac.last_name || ""}`.trim() || (fu.email as string)?.split("@")[0] || "";
+      }
+    });
 
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);

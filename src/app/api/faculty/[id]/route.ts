@@ -16,7 +16,7 @@ export async function GET(
       .from("faculty")
       .select(`
         *,
-        user:users(id, full_name, email, phone, avatar_url, is_active),
+        user:users(id, email, phone, is_active),
         department:departments(id, name, code)
       `)
       .eq("id", id)
@@ -28,6 +28,17 @@ export async function GET(
         data: null,
         error: "Faculty not found",
       }, { status: 404 });
+    }
+
+    const fFirstName = (faculty as Record<string, unknown>).first_name as string || "";
+    const fLastName = (faculty as Record<string, unknown>).last_name as string || "";
+    const fFullName = `${fFirstName} ${fLastName}`.trim();
+    const fUser = (faculty as Record<string, unknown>).user as Record<string, unknown> | null;
+    if (fUser) {
+      fUser.full_name = fFullName || (fUser.email as string)?.split("@")[0] || "";
+      fUser.avatar_url = null;
+    } else {
+      (faculty as Record<string, unknown>).user = { id: (faculty as Record<string, unknown>).user_id, full_name: fFullName, email: "", phone: null, avatar_url: null, is_active: true };
     }
 
     const { data: subjects } = await supabase
@@ -42,12 +53,25 @@ export async function GET(
       .from("students")
       .select(`
         *,
-        user:users(id, full_name, email),
+        user:users(id, email),
         department:departments(id, name, code),
         program:programs(id, name, code)
       `)
       .eq("is_active", true)
       .limit(50);
+
+    const enrichedStudents = (students || []).map((s: Record<string, unknown>) => {
+      const sfn = (s.first_name as string) || "";
+      const sln = (s.last_name as string) || "";
+      const sFull = `${sfn} ${sln}`.trim();
+      const su = s.user as Record<string, unknown> | null;
+      if (su) {
+        su.full_name = sFull || (su.email as string)?.split("@")[0] || "";
+      } else {
+        s.user = { id: s.user_id, full_name: sFull, email: "" };
+      }
+      return s;
+    });
 
     const { data: documents } = await supabase
       .from("documents")
@@ -58,7 +82,7 @@ export async function GET(
     const enrichedFaculty = {
       ...faculty,
       subjects_data: subjects || [],
-      students_data: students || [],
+      students_data: enrichedStudents || [],
       documents_data: documents || [],
     };
 

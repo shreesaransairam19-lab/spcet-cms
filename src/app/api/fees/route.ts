@@ -39,11 +39,19 @@ export async function GET(request: NextRequest) {
         .from("fee_payments")
         .select(`
           *,
-          student:students(id, roll_number, user:users(full_name)),
+          student:students(id, roll_number, first_name, last_name, user:users(id, email)),
           fee_structure:fee_structures(fee_type, amount, program:programs(name))
         `)
         .order("payment_date", { ascending: false })
         .limit(10);
+
+      (recentPayments || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
 
       return NextResponse.json({
         success: true,
@@ -68,7 +76,7 @@ export async function GET(request: NextRequest) {
         .from("fee_payments")
         .select(`
           *,
-          student:students(id, roll_number, user:users(full_name)),
+          student:students(id, roll_number, first_name, last_name, user:users(id, email)),
           fee_structure:fee_structures(id, fee_type, amount, due_date, semester_number, program:programs(name))
         `)
         .eq("student_id", student_id);
@@ -105,6 +113,14 @@ export async function GET(request: NextRequest) {
         }, { status: 500 });
       }
 
+      (payments || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
+
       const total = count || 0;
       return NextResponse.json<ApiListResponse<FeePayment>>({
         success: true,
@@ -129,7 +145,7 @@ export async function GET(request: NextRequest) {
       .from("fee_payments")
       .select(`
         *,
-        student:students(id, roll_number, user:users(full_name), department:departments(name)),
+        student:students(id, roll_number, first_name, last_name, user:users(id, email), department:departments(name)),
         fee_structure:fee_structures(fee_type, amount, program:programs(name))
       `);
 
@@ -164,6 +180,14 @@ export async function GET(request: NextRequest) {
         success: false, data: null, error: error.message,
       }, { status: 500 });
     }
+
+    (payments || []).forEach((item: Record<string, unknown>) => {
+      const student = item.student as Record<string, unknown> | null;
+      if (student) {
+        const su = student.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      }
+    });
 
     const total = count || 0;
     return NextResponse.json<ApiListResponse<FeePayment>>({

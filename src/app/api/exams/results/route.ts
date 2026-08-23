@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         .from("exam_results")
         .select(`
           *,
-          student:students(id, roll_number, user:users(full_name)),
+          student:students(id, roll_number, first_name, last_name, user:users(id, email)),
           subject:subjects(id, name, code, credits),
           exam_schedule:exam_schedules(id, exam_type, max_marks, passing_marks, exam_date)
         `)
@@ -38,6 +38,14 @@ export async function GET(request: NextRequest) {
       if (error) {
         return NextResponse.json({ success: false, data: null, error: error.message }, { status: 500 });
       }
+
+      (results || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
 
       return NextResponse.json({ success: true, data: results, error: null });
     }
@@ -98,7 +106,7 @@ export async function GET(request: NextRequest) {
         .from("exam_results")
         .select(`
           *,
-          student:students(id, roll_number, user:users(full_name), department_id),
+          student:students(id, roll_number, first_name, last_name, user:users(id, email), department_id),
           subject:subjects(id, name, code, credits),
           exam_schedule:exam_schedules(id, exam_type, max_marks, exam_date)
         `)
@@ -113,6 +121,14 @@ export async function GET(request: NextRequest) {
         (r) => (r.student as unknown as { department_id: string })?.department_id === facultyRecord.department_id
       );
 
+      (filtered || []).forEach((item: Record<string, unknown>) => {
+        const student = item.student as Record<string, unknown> | null;
+        if (student) {
+          const su = student.user as Record<string, unknown> | null;
+          if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+        }
+      });
+
       return NextResponse.json({ success: true, data: filtered, error: null });
     }
 
@@ -120,7 +136,7 @@ export async function GET(request: NextRequest) {
       .from("semester_results")
       .select(`
         *,
-        student:students(id, roll_number, user:users(full_name)),
+        student:students(id, roll_number, first_name, last_name, user:users(id, email)),
         semester:semesters(id, number, academic_year:academic_years(name))
       `)
       .order("created_at", { ascending: false })
@@ -129,6 +145,14 @@ export async function GET(request: NextRequest) {
     if (semError) {
       return NextResponse.json({ success: false, data: null, error: semError.message }, { status: 500 });
     }
+
+    (semesterResults || []).forEach((item: Record<string, unknown>) => {
+      const student = item.student as Record<string, unknown> | null;
+      if (student) {
+        const su = student.user as Record<string, unknown> | null;
+        if (su) su.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim() || (su.email as string)?.split("@")[0] || "";
+      }
+    });
 
     return NextResponse.json({ success: true, data: semesterResults, error: null });
   } catch (err) {
